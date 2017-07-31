@@ -1,4 +1,13 @@
 {
+    "name": "furdarius/oidconnect-laravel",
+    "description": "Open ID Connect client library for Laravel Framework",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Artemiy Ryabinkov",
+            "email": "getlag@ya.ru"
+        }
+    ],
     "require": {
         "laravel/socialite": "^3.0",
         "lcobucci/jwt": "dev-master",
