@@ -2,12 +2,14 @@
 
 namespace Furdarius\OIDConnect\Contract;
 
+use Lcobucci\JWT\Token\DataSet;
+
 interface Authenticator
 {
     /**
-     * @param string $email
+     * @param DataSet $claims
      *
      * @return mixed
      */
-    public function authUserByEmail(string $email);
+    public function authUser(DataSet $claims);
 }

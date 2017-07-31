@@ -118,8 +118,9 @@ class TokenMiddleware
             $iss = $claims->get('iss');
 
             try {
+                $this->authenticator->authUser($claims);
+
                 $refreshedIDToken = $this->tokenRefresher->refreshIDToken($sub, $iss);
-                $this->authUser($token->claims());
 
                 return $next($request)
                     ->header('Access-Control-Expose-Headers', 'Authorized')
@@ -129,7 +130,7 @@ class TokenMiddleware
             }
         }
 
-        $this->authenticator->authUserByEmail($claims->get('email'));
+        $this->authenticator->authUser($claims);
 
         return $next($request);
     }
