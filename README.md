@@ -15,7 +15,7 @@ To install this package you will need:
 
 Use composer to install
 ```bash
-composer require furdarius/oidconnect-laravel:0.1.x@dev
+composer require furdarius/oidconnect-laravel:dev-master
 ```
 
 Open config/app.php and register the required service provider above your application providers.
