@@ -1,0 +1,7 @@
+{
+    "require": {
+        "laravel/socialite": "^3.0",
+        "lcobucci/jwt": "dev-master",
+        "illuminate/database": "^5.4"
+    }
+}
