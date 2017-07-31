@@ -2,6 +2,11 @@
 
 The OpenIDConnect Laravel package is meant to provide you an opportunity to easily authenticate users using OpenID Connect protocol.
 
+[![Latest Stable Version](https://poser.pugx.org/furdarius/oidconnect-laravel/v/stable)](https://packagist.org/packages/furdarius/oidconnect-laravel)
+[![Latest Unstable Version](https://poser.pugx.org/furdarius/oidconnect-laravel/v/unstable)](https://packagist.org/packages/furdarius/oidconnect-laravel)
+[![Total Downloads](https://poser.pugx.org/furdarius/oidconnect-laravel/downloads)](https://packagist.org/packages/furdarius/oidconnect-laravel)
+[![License](https://poser.pugx.org/furdarius/oidconnect-laravel/license)](https://packagist.org/packages/furdarius/oidconnect-laravel)
+
 ## Installation
 
 To install this package you will need:
