@@ -12,5 +12,12 @@
         "laravel/socialite": "^3.0",
         "lcobucci/jwt": "dev-master",
         "illuminate/database": "^5.4"
-    }
+    },
+    "autoload": {
+        "psr-4": {
+            "Furdarius\\OIDConnect\\": "src/"
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
 }
