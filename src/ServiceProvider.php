@@ -36,7 +36,7 @@ class ServiceProvider extends ServiceProviderIlluminate
         $socialite = $this->app->make(SocialiteFactory::class);
 
         $socialite->extend(
-            'internal',
+            'myoidc',
             function ($app) use ($socialite) {
                 $config = $app['config']['opidconnect'];
 
