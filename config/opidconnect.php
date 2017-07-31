@@ -1,4 +1,5 @@
 <?php
+
 return [
     'client_id' => '',
     'client_secret' => '',
@@ -6,5 +7,5 @@ return [
     'auth' => 'https://opidc.provider/auth',
     'token' => 'https://opidc.provider/token',
     'keys' => 'https://opidc.provider/keys',
-    'guzzle' => []
+    'guzzle' => [],
 ];
