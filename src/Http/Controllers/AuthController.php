@@ -2,13 +2,14 @@
 
 namespace Furdarius\OIDConnect\Http\Controllers;
 
+use Furdarius\OIDConnect\Exception\AuthenticationException;
 use Furdarius\OIDConnect\Exception\TokenStorageException;
-use Furdarius\OIDConnect\RequestTokenParser;
 use Furdarius\OIDConnect\TokenRefresher;
 use Furdarius\OIDConnect\TokenStorage;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller as BaseController;
+use Lcobucci\JWT\Parser;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 
 class AuthController extends BaseController
@@ -62,21 +63,29 @@ class AuthController extends BaseController
     }
 
     /**
-     * @param Request                              $request
-     * @param \Furdarius\OIDConnect\TokenRefresher $refresher
-     * @param RequestTokenParser                   $parser
+     * @param Request        $request
+     * @param TokenRefresher $refresher
+     * @param Parser         $parser
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return AuthenticationException|JsonResponse
      */
-    public function refresh(Request $request, TokenRefresher $refresher, RequestTokenParser $parser)
+    public function refresh(Request $request, TokenRefresher $refresher, Parser $parser)
     {
+        $data = $request->json()->all();
+
+        if (!isset($data['token'])) {
+            return new AuthenticationException("Failed to get JWT token from input");
+        }
+
+        $jwt = $data['token'];
+
         /**
          * We cant get claims from Token interface, so call claims method implicitly
          * link: https://github.com/lcobucci/jwt/pull/186
          *
          * @var $token \Lcobucci\JWT\Token\Plain
          */
-        $token = $parser->parse($request);
+        $token = $parser->parse($jwt);
 
         $claims = $token->claims();
 
