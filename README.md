@@ -37,9 +37,10 @@ php artisan migrate
 
 ## Usage
 
+
+#### Configuration
 At first you will need to add credentials for the OpenID Connect service your application utilizes.
 These credentials should be placed in your `config/opidconnect.php` configuration file.
-
 
 ```php
 <?php
@@ -54,97 +55,13 @@ return [
 ];
 ```
 
-Also you will need to define `redirect`, `callback` and `refresh` routes:
-```php
-Route::get('/auth/redirect', 'Auth\LoginController@redirect');
-Route::get('/auth/callback', 'Auth\LoginController@callback');
-Route::get('/auth/refresh', 'Auth\LoginController@refresh');
-```
+#### Endpoints
+Now, your app has auth endpoints:
+* `GET /auth/redirect` - Used to redirect client to Auth Service login page.
+* `GET /auth/callback` - Used when Auth Service redirect client to callback url with code.
+* `POST /auth/refresh` - Used by client for ID Token refreshing.
 
-User authentication controller will looks like:
-
-```php
-<?php
-
-namespace App\Http\Controllers\Auth;
-
-use App\Http\Controllers\Controller;
-use Furdarius\OIDConnect\Exception\TokenStorageException;
-use Furdarius\OIDConnect\RequestTokenParser;
-use Furdarius\OIDConnect\TokenRefresher;
-use Furdarius\OIDConnect\TokenStorage;
-use Illuminate\Http\Request;
-use Symfony\Component\HttpFoundation\RedirectResponse;
-
-class LoginController extends Controller
-{
-    /**
-     * @param Request $request
-     *
-     * @return RedirectResponse
-     */
-    public function redirect(Request $request)
-    {
-        /** @var \Symfony\Component\HttpFoundation\RedirectResponse $redirectResponse */
-        $redirectResponse = \Socialite::with('myoidc')->stateless()->redirect();
-
-        return $redirectResponse;
-    }
-
-    /**
-     * @param Request                            $request
-     * @param \Furdarius\OIDConnect\TokenStorage $storage
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function callback(Request $request, TokenStorage $storage)
-    {
-        /** @var \Laravel\Socialite\Two\User $user */
-        $user = \Socialite::with('myoidc')->stateless()->user();
-
-        if (!$storage->saveRefresh($user['sub'], $user['iss'], $user->refreshToken)) {
-            throw new TokenStorageException("Failed to save refresh token");
-        }
-
-        return $this->responseJson([
-            'name' => $user->getName(),
-            'email' => $user->getEmail(),
-            'token' => $user->token,
-        ]);
-    }
-
-    /**
-     * @param Request                              $request
-     * @param \Furdarius\OIDConnect\TokenRefresher $refresher
-     * @param RequestTokenParser                   $parser
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function refresh(Request $request, TokenRefresher $refresher, RequestTokenParser $parser)
-    {
-        /**
-         * We cant get claims from Token interface, so call claims method implicitly
-         * link: https://github.com/lcobucci/jwt/pull/186
-         *
-         * @var $token \Lcobucci\JWT\Token\Plain
-         */
-        $token = $parser->parse($request);
-
-        $claims = $token->claims();
-
-        $sub = $claims->get('sub');
-        $iss = $claims->get('iss');
-
-        $refreshedIDToken = $refresher->refreshIDToken($sub, $iss);
-
-        return $this->responseJson([
-            'token' => $refreshedIDToken,
-        ]);
-    }
-}
-```
-
-
+#### Middleware
 You need to use Auth Middleware on protected routes.
 Open `App\Http\Kernel` and register middleware in `$routeMiddleware`:
 ```php
