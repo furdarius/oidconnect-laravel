@@ -119,14 +119,14 @@ class OIDConnectSocialiteProvider extends AbstractProvider implements ProviderIn
     protected function getUserByToken($token)
     {
         /**
+         * We cant get claims from Token interface, so call claims method implicitly
+         * link: https://github.com/lcobucci/jwt/pull/186
+         *
          * @var $plainToken \Lcobucci\JWT\Token\Plain
          */
         $plainToken = $this->parser->parse($token);
 
         $claims = $plainToken->claims();
-
-        // We cant get claims from Token interface, so call claims method implicitly
-        // https://github.com/lcobucci/jwt/pull/186
 
         return [
             'sub' => $claims->get('sub'),

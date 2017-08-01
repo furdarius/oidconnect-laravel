@@ -6,7 +6,6 @@ use Closure;
 use Furdarius\OIDConnect\Contract\Authenticator;
 use Furdarius\OIDConnect\Exception\AuthenticationException;
 use Lcobucci\Clock\Clock;
-use Lcobucci\JWT\Parser;
 use Lcobucci\JWT\Signer;
 use Lcobucci\JWT\Validation\Constraint\SignedWith;
 use Lcobucci\JWT\Validation\Constraint\ValidAt;
@@ -14,10 +13,8 @@ use Lcobucci\JWT\Validator;
 
 class TokenMiddleware
 {
-    const AUTH_HEADER = "Authorization";
-
     /**
-     * @var Parser
+     * @var RequestTokenParser
      */
     private $parser;
     /**
@@ -48,16 +45,16 @@ class TokenMiddleware
     /**
      * TokenMiddleware constructor.
      *
-     * @param Parser         $parser
-     * @param Validator      $validator
-     * @param Clock          $clock
-     * @param Signer         $signer
-     * @param KeysFetcher    $keysFetcher
-     * @param TokenRefresher $tokenRefresher
-     * @param Authenticator  $authenticator
+     * @param RequestTokenParser $parser
+     * @param Validator          $validator
+     * @param Clock              $clock
+     * @param Signer             $signer
+     * @param KeysFetcher        $keysFetcher
+     * @param TokenRefresher     $tokenRefresher
+     * @param Authenticator      $authenticator
      */
     public function __construct(
-        Parser $parser,
+        RequestTokenParser $parser,
         Validator $validator,
         Clock $clock,
         Signer $signer,
@@ -85,21 +82,14 @@ class TokenMiddleware
      */
     public function handle($request, Closure $next)
     {
-        $bearer = $request->headers->get(TokenMiddleware::AUTH_HEADER);
+        /**
+         * We cant get claims from Token interface, so call claims method implicitly
+         * link: https://github.com/lcobucci/jwt/pull/186
+         *
+         * @var $token \Lcobucci\JWT\Token\Plain
+         */
+        $token = $this->parser->parse($request);
 
-        if (empty($bearer)) {
-            throw new AuthenticationException("Request doesn't contain auth token");
-        }
-
-        $parts = explode(" ", $bearer);
-
-        if (count($parts) < 2) {
-            throw new AuthenticationException("Invalid format of auth header");
-        }
-
-        $jwt = $parts[1];
-
-        $token = $this->parser->parse($jwt);
         $kid = $token->headers()->get('kid');
         $key = $this->keysFetcher->getByKID($kid);
 
@@ -111,26 +101,11 @@ class TokenMiddleware
             throw new AuthenticationException("Token sign is invalid");
         }
 
-        $claims = $token->claims();
-
         if (!$this->validator->validate($token, new ValidAt($this->clock))) {
-            $sub = $claims->get('sub');
-            $iss = $claims->get('iss');
-
-            try {
-                $this->authenticator->authUser($claims);
-
-                $refreshedIDToken = $this->tokenRefresher->refreshIDToken($sub, $iss);
-
-                return $next($request)
-                    ->header('Access-Control-Expose-Headers', 'Authorized')
-                    ->header('Authorized', "Refreshed " . $refreshedIDToken);
-            } catch (\RuntimeException $e) {
-                throw new AuthenticationException($e->getMessage());
-            }
+            throw new AuthenticationException("Token is expired");
         }
 
-        $this->authenticator->authUser($claims);
+        $this->authenticator->authUser($token->claims());
 
         return $next($request);
     }

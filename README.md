@@ -30,15 +30,16 @@ If you'd like to make configuration changes in the configuration file you can pu
 php artisan vendor:publish --provider="Furdarius\OIDConnect\ServiceProvider"
 ```
 
+After that, roll up migrations:
+```bash
+php artisan migrate
+```
 
 ## Usage
 
-At first define `login` and `callback` routes:
-* `Route::get('/login', 'Auth\LoginController@login');`
-* `Route::get('/login/callback', 'Auth\LoginController@callback');`
-
-Also you will need to add credentials for the OpenID Connect service your application utilizes.
+At first you will need to add credentials for the OpenID Connect service your application utilizes.
 These credentials should be placed in your `config/opidconnect.php` configuration file.
+
 
 ```php
 <?php
@@ -53,6 +54,13 @@ return [
 ];
 ```
 
+Also you will need to define `redirect`, `callback` and `refresh` routes:
+```php
+Route::get('/auth/redirect', 'Auth\LoginController@redirect');
+Route::get('/auth/callback', 'Auth\LoginController@callback');
+Route::get('/auth/refresh', 'Auth\LoginController@refresh');
+```
+
 User authentication controller will looks like:
 
 ```php
@@ -62,6 +70,8 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use Furdarius\OIDConnect\Exception\TokenStorageException;
+use Furdarius\OIDConnect\RequestTokenParser;
+use Furdarius\OIDConnect\TokenRefresher;
 use Furdarius\OIDConnect\TokenStorage;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -69,15 +79,11 @@ use Symfony\Component\HttpFoundation\RedirectResponse;
 class LoginController extends Controller
 {
     /**
-     * Login method is used to redirect user on Auth Service login page.
-     * It can be good idea to give it route like "miwebsite.com/login:
-     *     Route::get('/login', 'Auth\LoginController@login');
-     * So, when user open this route, he will redirected to AuthService and see login form.
-     * 
      * @param Request $request
+     *
      * @return RedirectResponse
      */
-    public function login(Request $request)
+    public function redirect(Request $request)
     {
         /** @var \Symfony\Component\HttpFoundation\RedirectResponse $redirectResponse */
         $redirectResponse = \Socialite::with('myoidc')->stateless()->redirect();
@@ -86,12 +92,9 @@ class LoginController extends Controller
     }
 
     /**
-     * When user enter auth data, AuthService will redirect him on callback route.
-     * You can define is as Route::get('/login/callback', 'Auth\LoginController@callback'); and then
-     * setup redirect link in config (opidconnect.redirect)
-     * 
-     * @param Request $request
+     * @param Request                            $request
      * @param \Furdarius\OIDConnect\TokenStorage $storage
+     *
      * @return \Illuminate\Http\JsonResponse
      */
     public function callback(Request $request, TokenStorage $storage)
@@ -107,6 +110,35 @@ class LoginController extends Controller
             'name' => $user->getName(),
             'email' => $user->getEmail(),
             'token' => $user->token,
+        ]);
+    }
+
+    /**
+     * @param Request                              $request
+     * @param \Furdarius\OIDConnect\TokenRefresher $refresher
+     * @param RequestTokenParser                   $parser
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function refresh(Request $request, TokenRefresher $refresher, RequestTokenParser $parser)
+    {
+        /**
+         * We cant get claims from Token interface, so call claims method implicitly
+         * link: https://github.com/lcobucci/jwt/pull/186
+         *
+         * @var $token \Lcobucci\JWT\Token\Plain
+         */
+        $token = $parser->parse($request);
+
+        $claims = $token->claims();
+
+        $sub = $claims->get('sub');
+        $iss = $claims->get('iss');
+
+        $refreshedIDToken = $refresher->refreshIDToken($sub, $iss);
+
+        return $this->responseJson([
+            'token' => $refreshedIDToken,
         ]);
     }
 }
