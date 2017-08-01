@@ -6,6 +6,7 @@ use Furdarius\OIDConnect\Exception\TokenStorageException;
 use Furdarius\OIDConnect\RequestTokenParser;
 use Furdarius\OIDConnect\TokenRefresher;
 use Furdarius\OIDConnect\TokenStorage;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller as BaseController;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -39,11 +40,25 @@ class AuthController extends BaseController
             throw new TokenStorageException("Failed to save refresh token");
         }
 
-        return response()->json([
+        return $this->responseJson([
             'name' => $user->getName(),
             'email' => $user->getEmail(),
             'token' => $user->token,
         ]);
+    }
+
+    /**
+     * @param array|\JsonSerializable $data
+     * @param int                     $status
+     * @param array                   $headers
+     *
+     * @return JsonResponse
+     */
+    protected function responseJson($data, int $status = 200, array $headers = []): JsonResponse
+    {
+        return response()->json($data, $status, $headers)
+            ->setEncodingOptions(JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)
+            ->header('Access-Control-Allow-Origin', '*');
     }
 
     /**
@@ -70,7 +85,7 @@ class AuthController extends BaseController
 
         $refreshedIDToken = $refresher->refreshIDToken($sub, $iss);
 
-        return response()->json([
+        return $this->responseJson([
             'token' => $refreshedIDToken,
         ]);
     }

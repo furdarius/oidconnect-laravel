@@ -12,7 +12,8 @@
     "require": {
         "laravel/socialite": "^3.0",
         "lcobucci/jwt": "^4.0-dev",
-        "illuminate/database": "^5.4"
+        "illuminate/database": "^5.4",
+        "illuminate/routing": "^5.4"
     },
     "autoload": {
         "psr-4": {
