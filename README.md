@@ -18,9 +18,10 @@ Use composer to install
 composer require furdarius/oidconnect-laravel:dev-master
 ```
 
-Open config/app.php and register the required service provider above your application providers.
+Open `config/app.php` and register the required service providers above your application providers.
 ```php
 'providers' => [
+    Laravel\Socialite\SocialiteServiceProvider::class,
     Furdarius\OIDConnect\ServiceProvider::class
 ]
 ```
