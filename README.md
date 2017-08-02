@@ -77,3 +77,97 @@ Route::middleware('token')->get('/protected', function (Request $request) {
    return "You are on protected zone";
 });
 ```
+
+#### User Auth
+
+Create your own `StatelessGuard` and setup it in `config/auth.php`. Example:
+
+Guard:
+```php
+<?php
+
+namespace App\Auth;
+
+use Illuminate\Auth\AuthenticationException;
+use Illuminate\Auth\GuardHelpers;
+use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Contracts\Auth\Guard;
+use Illuminate\Support\Traits\Macroable;
+
+class StatelessGuard implements Guard
+{
+    use GuardHelpers, Macroable;
+
+    /**
+     * @return \Illuminate\Contracts\Auth\Authenticatable
+     * @throws AuthenticationException
+     */
+    public function user()
+    {
+        if (null === $this->user) {
+            throw new AuthenticationException('Unauthenticated user');
+        }
+
+        return $this->user;
+    }
+
+    /**
+     * @param array $credentials
+     * @return bool
+     */
+    public function validate(array $credentials = [])
+    {
+        return $this->user instanceof Authenticatable;
+    }
+}
+```
+
+Config (`config/auth.php`):
+
+```php
+'defaults' => [
+    'guard' => 'stateless',
+    'passwords' => 'users',
+],
+
+...
+
+'guards' => [
+    'stateless' => [
+        'driver' => 'stateless'
+    ]
+],
+```
+
+
+Then implement own `Authenticator`. Example:
+
+```php
+class PersonAuthenticatorAdapter implements Authenticator
+{
+    /**
+     * @param DataSet $claims
+     */
+    public function authUser(DataSet $claims)
+    {
+        $email = $claims->get('email');
+        if (!$email) {
+            throw new AuthenticationException('User\'s email not present in token');
+        }
+        
+        $model = App\Person::where('email', $email)->firstOrFail();
+
+        \Auth::setUser($model);
+    }
+}
+```
+
+And register it using service provider:
+
+```php
+$this->app->singleton(Authenticator::class, function ($app) {
+    return new PersonAuthenticatorAdapter();
+});
+```
+
+Now you can use `\Auth::user();` for getting current user informaiton.
