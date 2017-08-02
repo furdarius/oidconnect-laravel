@@ -32,7 +32,7 @@ class ServiceProvider extends ServiceProviderIlluminate
     public function boot()
     {
         $this->publishes([realpath(__DIR__ . '/../config/opidconnect.php') => config_path('opidconnect.php')]);
-        $this->loadMigrationsFrom(realpath(__DIR__ . '/../database/opidconnect.php'));
+        $this->loadMigrationsFrom(realpath(__DIR__ . '/../migrations'));
         $this->loadRoutesFrom(realpath(__DIR__ . '/Http/routes.php'));
 
         $socialite = $this->app->make(SocialiteFactory::class);
