@@ -101,9 +101,9 @@ class TokenMiddleware
             throw new AuthenticationException("Token sign is invalid");
         }
 
-        if (!$this->validator->validate($token, new ValidAt($this->clock))) {
-            throw new AuthenticationException("Token is expired");
-        }
+//        if (!$this->validator->validate($token, new ValidAt($this->clock))) {
+//            throw new AuthenticationException("Token is expired");
+//        }
 
         $this->authenticator->authUser($token->claims());
 
