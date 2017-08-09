@@ -33,6 +33,14 @@ class AuthController extends BaseController
      */
     public function callback(Request $request, TokenStorage $storage)
     {
+        // TODO: handle CORS more elegant way
+        if ($request->getMethod() === 'OPTIONS') {
+            return $this->responseJson([])
+                ->header('Access-Control-Allow-Origin', '*')
+                ->header('Access-Control-Allow-Methods', strtoupper($request->headers->get('Access-Control-Request-Method')))
+                ->header('Access-Control-Allow-Headers', $request->headers->get('Access-Control-Request-Headers'));
+        }
+
         /** @var \Laravel\Socialite\Two\User $user */
         $user = \Socialite::with('myoidc')->stateless()->user();
 
