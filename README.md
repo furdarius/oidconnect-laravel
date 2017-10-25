@@ -10,7 +10,7 @@ The OpenIDConnect Laravel package is meant to provide you an opportunity to easi
 ## Installation
 
 To install this package you will need:
-* Laravel 5.1+
+* Laravel 5.4+
 * PHP 7.1+
 
 Use composer to install
