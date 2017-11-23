@@ -9,6 +9,8 @@ class NullAuthenticatorAdapter implements Authenticator
 {
     /**
      * @param DataSet $claims
+     *
+     * @return void
      */
     public function authUser(DataSet $claims)
     {

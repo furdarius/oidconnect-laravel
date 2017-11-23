@@ -21,8 +21,10 @@ composer require furdarius/oidconnect-laravel:dev-master
 Open `config/app.php` and register the required service providers above your application providers.
 ```php
 'providers' => [
+    ...
     Laravel\Socialite\SocialiteServiceProvider::class,
     Furdarius\OIDConnect\ServiceProvider::class
+    ...
 ]
 ```
 
@@ -143,10 +145,21 @@ Config (`config/auth.php`):
 Then implement own `Authenticator`. Example:
 
 ```php
+<?php
+
+namespace App\Auth;
+
+use App\User;
+use Furdarius\OIDConnect\Contract\Authenticator;
+use Furdarius\OIDConnect\Exception\AuthenticationException;
+use Lcobucci\JWT\Token\DataSet;
+
 class PersonAuthenticatorAdapter implements Authenticator
 {
     /**
      * @param DataSet $claims
+     *
+     * @return void
      */
     public function authUser(DataSet $claims)
     {
@@ -154,20 +167,60 @@ class PersonAuthenticatorAdapter implements Authenticator
         if (!$email) {
             throw new AuthenticationException('User\'s email not present in token');
         }
-        
-        $model = App\Person::where('email', $email)->firstOrFail();
+
+        $model = new User(['email' => $email]);
 
         \Auth::setUser($model);
     }
 }
 ```
 
-And register it using service provider:
+And implement auth guard service provider. Example:
 
 ```php
-$this->app->singleton(Authenticator::class, function ($app) {
-    return new PersonAuthenticatorAdapter();
-});
+<?php
+
+namespace App\Auth;
+
+use Furdarius\OIDConnect\Contract\Authenticator;
+use Illuminate\Support\ServiceProvider;
+
+class AuthenticatorServiceProvider extends ServiceProvider
+{
+    /**
+     * Bootstrap any application services.
+     *
+     * @return void
+     */
+    public function boot()
+    {
+        \Auth::extend('stateless', function () {
+            return new StatelessGuard();
+        });
+    }
+
+    /**
+     * Register any application services.
+     *
+     * @return void
+     */
+    public function register()
+    {
+        $this->app->singleton(Authenticator::class, function ($app) {
+            return new PersonAuthenticatorAdapter();
+        });
+    }
+}
 ```
 
-Now you can use `\Auth::user();` for getting current user informaiton.
+Then register it in `config/app.php`:
+
+```
+'providers' => [
+    ...
+    App\Auth\AuthenticatorServiceProvider::class,
+    ...
+]
+```
+
+Now you can use `\Auth::user();` for getting current user information.
