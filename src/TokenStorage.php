@@ -13,7 +13,6 @@ class TokenStorage
 
     /**
      * TokenStorage constructor.
-     *
      * @param  \Illuminate\Database\Query\Builder $query
      */
     public function __construct(QueryBuilder $query)
@@ -24,36 +23,39 @@ class TokenStorage
     /**
      * Save refresh token in DB
      *
-     * @param string $idToken
+     * @param string $sub
+     * @param string $iss
      * @param string $refreshToken
-     *
      * @return bool
      */
-    public function saveRefresh(string $idToken, string $refreshToken): bool
+    public function saveRefresh(string $sub, string $iss, string $refreshToken): bool
     {
         return $this->query->getConnection()
             ->table("tokens")
-            ->insert([
-                'id_token' => $idToken,
+            ->updateOrInsert([
+                'sub' => $sub,
+                'iss' => $iss,
+            ], [
                 'refresh_token' => $refreshToken,
             ]);
     }
 
 
     /**
-     * Fetch and return Refresh token by ID Token
+     * Fetch and return Refresh token by iss and sub params
      *
-     * @param string $idToken
-     *
+     * @param string $sub
+     * @param string $iss
      * @return null|string
      */
-    public function fetchRefresh(string $idToken): ?string
+    public function fetchRefresh(string $sub, string $iss): ?string
     {
         /* @var \Illuminate\Support\Collection $list */
         $list = $this->query->getConnection()
             ->table("tokens")
             ->select(['refresh_token'])
-            ->where('id_token', $idToken)
+            ->where('sub', $sub)
+            ->where('iss', $iss)
             ->limit(1)
             ->get();
 
@@ -62,19 +64,5 @@ class TokenStorage
         }
 
         return $list->first()->refresh_token;
-    }
-
-    /**
-     * Delete Refresh token by ID Token
-     *
-     * @param string $idToken
-     */
-    public function deleteRefresh(string $idToken): void
-    {
-        $this->query->getConnection()
-            ->table("tokens")
-            ->select(['refresh_token'])
-            ->where('id_token', $idToken)
-            ->delete();
     }
 }

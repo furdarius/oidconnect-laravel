@@ -73,8 +73,8 @@ protected $routeMiddleware = [
 
 And then use it as usual:
 ```php
-Route::middleware('token')->get('/protected', function (Request $request) {
-   return "You are on protected zone";
+Route::middleware('token')->get('/protected', function (Illuminate\Http\Request $request) {
+    return "You are on protected zone";
 });
 ```
 

@@ -14,8 +14,10 @@ class CreateTokensTable extends Migration
     public function up()
     {
         Schema::create('tokens', function (Blueprint $table) {
-            $table->text('id_token')->unique();
+            $table->string('sub');
+            $table->string('iss');
             $table->string('refresh_token');
+            $table->index(['sub', 'iss']);
         });
     }
 
