@@ -58,13 +58,14 @@ class TokenRefresher
     }
 
     /**
-     * @param string $idToken
+     * @param string $sub
+     * @param string $iss
      *
      * @return string
      */
-    public function refreshIDToken(string $idToken): string
+    public function refreshIDToken(string $sub, string $iss): string
     {
-        $refreshToken = $this->storage->fetchRefresh($idToken);
+        $refreshToken = $this->storage->fetchRefresh($sub, $iss);
 
         if (!$refreshToken) {
             throw new TokenStorageException("Failed to fetch refresh token");
@@ -79,11 +80,9 @@ class TokenRefresher
             'scope' => implode(' ', $this->scopes),
         ]));
 
-        if (!$this->storage->saveRefresh($data['id_token'], $data['refresh_token'])) {
+        if (!$this->storage->saveRefresh($sub, $iss, $data['refresh_token'])) {
             throw new TokenStorageException("Failed to store refresh token");
         }
-
-        $this->storage->deleteRefresh($idToken);
 
         return $data['id_token'];
     }
